@@ -1,4 +1,4 @@
-# 🚀 DistDoDo
+# 🚀 To Do list
 
 [![Go](https://img.shields.io/badge/Go-1.21-blue?logo=go)](https://golang.org/)  
 [![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org/)  
