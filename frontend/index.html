@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ToDo List</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+<h1>ToDo List</h1>
+<ul id="list"></ul>
+<input id="text" placeholder="New task"/>
+<button onclick="addTask()">Add</button>
+<script>
+const client = mqtt.connect('ws://localhost:9001');
+client.on('connect', () => console.log('mqtt connected'));
+client.on('message', (topic, msg) => {
+  const e = JSON.parse(msg.toString());
+  if(e.type === 'created') appendTask(e.task);
+});
+client.subscribe('tasks');
+
+function fetchTasks() {
+  fetch('/tasks').then(r => r.json()).then(ts => {
+    document.getElementById('list').innerHTML='';
+    ts.forEach(t => appendTask(t));
+  });
+}
+function appendTask(t) {
+  const li = document.createElement('li');
+  li.innerText = t.text;
+  document.getElementById('list').appendChild(li);
+}
+function addTask() {
+  const text = document.getElementById('text').value;
+  fetch('/tasks', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({text})
+  });
+}
+fetchTasks();
+</script>
+</body>
+</html>
