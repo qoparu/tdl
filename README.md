@@ -40,9 +40,10 @@ Lightweight distributed to-do list with real-time push notifications and pluggab
 
 ## ⚡ Quick Start  
 
-1. **Clone**  
+1. **Clone**
+1. **Run the server**
    ```bash
-   git clone https://github.com/your-org/distdodo.git
-   cd distdodo
+   go run ./cmd/server -config config.yaml
+   ```
 
 <div align="center"> <h3>✨ Crafted with ❤️ by <a href="https://github.com/qoparu">Aru</a> ✨</h3> <p>For the <b>DISTRIBUTED PROGRAMMING FOR WEB, IOT AND MOBILE SYSTEMS</b> exam</p>
