@@ -5,9 +5,9 @@ import (
 	"log"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-
-	"github.com/example/tdl/internal/api"
+	
 	"github.com/example/tdl/internal/config"
+	api "github.com/example/tdl/internal/http"
 	"github.com/example/tdl/internal/mq"
 	"github.com/example/tdl/internal/task"
 )
