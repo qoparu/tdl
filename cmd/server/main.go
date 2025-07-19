@@ -5,7 +5,8 @@ import (
 	"log"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	
+
+	"github.com/example/tdl/internal/api"
 	"github.com/example/tdl/internal/config"
 	api "github.com/example/tdl/internal/http"
 	"github.com/example/tdl/internal/mq"
@@ -33,17 +34,3 @@ func main() {
 
 	log.Printf("listening on %s", cfg.HTTP.Address)
 	if err := srv.Serve(cfg.HTTP.Address); err != nil {
-		log.Fatal(err)
-	}
-}
- 6 changes: 6 additions & 0 deletions6  
-config.yaml
-Viewed
-Original file line number	Diff line number	Diff line change
-@@ -0,0 +1,6 @@
-http:
-  address: ":8080"
-mqtt:
-  broker: "tcp://localhost:1883"
-  client_id: "tdl-server"
-  topic: "tasks"
