@@ -14,18 +14,6 @@ A lightweight distributed To-Do List demonstrating various communication models 
 
 The system is built on a microservice architecture where components interact asynchronously via a message broker. This ensures loose coupling and high fault tolerance.
 
-```mermaid
-flowchart LR
-    React[React (Client)]
-    Server[Server (Go, API Gateway)]
-    RabbitMQ[RabbitMQ (Broker)]
-    Worker[Worker (Go)]
-    React -->|HTTP| Server
-    Server -->|Publish Task| RabbitMQ
-    RabbitMQ -->|Consume Task| Worker
-    Worker -->|Status/Result| Server
-    Server -->|HTTP Response| React
-
 ---
 
 ## 🎯 Basic Requirements  
@@ -53,12 +41,69 @@ flowchart LR
 
 ---
 
-## ⚡ Quick Start  
+* **Server (API Gateway)**: Accepts HTTP requests from the client, performs initial validation, and publishes tasks to the RabbitMQ queue.
+* **Worker**: An independent service that subscribes to the queue, fetches tasks, and executes the core business logic.
+* **RabbitMQ**: A message broker that implements the **Publish-Subscribe** pattern, guaranteeing task delivery from the Server to the Worker.
 
-1. **Clone**
-1. **Run the server**
-   ```bash
-   go run ./cmd/server -config config.yaml
-   ```
+---
 
-<div align="center"> <h3>✨ Crafted with ❤️ by <a href="https://github.com/qoparu">Aru</a> ✨</h3> <p>For the <b>DISTRIBUTED PROGRAMMING FOR WEB, IOT AND MOBILE SYSTEMS</b> exam</p>
+## 🚀 Quick Start (Docker)
+
+This is the recommended way to run the project. Docker Compose will automatically bring up all system components.
+
+1.  **Clone the repository** and navigate into it.
+2.  **Run all containers** with a single command:
+    ```bash
+    docker-compose up --build
+    ```
+    This command will run the Backend, Frontend, and RabbitMQ. The frontend will be available at `http://localhost:3000`.
+
+---
+
+## 🛠️ Technologies and Concepts
+
+This project demonstrates the following key concepts from the 'Distributed Programming' course:
+
+* **Architecture**:
+    * **Microservices**: The application is split into independent services (`Server`, `Worker`).
+    * **Publish-Subscribe**: Implemented using **RabbitMQ** for asynchronous communication.
+
+* **Communication**:
+    * **Message-Oriented Middleware**: Using **RabbitMQ** (with the **AMQP** protocol).
+    * **Remote Procedure Call (RPC)**: An RPC module using `net/rpc` is implemented.
+    * **REST API**: For client-server interaction.
+
+* **Synchronization**:
+    * **Lamport's Logical Clocks**: A mechanism for partial ordering of events in a distributed system is implemented.
+
+* **Data Serialization**:
+    * **JSON**: For API requests.
+    * **YAML**: For configuration files.
+
+* **Containerization & CI/CD**:
+    * **Docker & Docker Compose**: For environment isolation and orchestration.
+    * **GitHub Actions**: For automatic testing on every commit.
+
+---
+
+## 👨‍💻 Local Development (without Docker)
+
+For manually running each component separately.
+
+1.  **Run the message broker** (e.g., RabbitMQ via Docker):
+    ```bash
+    docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+    ```
+2.  **Run the Backend**:
+    ```bash
+    go run ./cmd/server -config config.yaml
+    ```
+3.  **Run the Frontend**:
+    ```bash
+    cd frontend && npm install && npm run dev
+    ```
+
+<div align="center">
+    <h3>✨ Crafted with ❤️ by <a href="https://github.com/qoparu">Aru</a> ✨</h3>
+    <p>For the <b>DISTRIBUTED PROGRAMMING FOR WEB, IOT AND MOBILE SYSTEMS</b> exam</p>
+</div>
