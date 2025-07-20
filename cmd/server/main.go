@@ -41,7 +41,7 @@ func loadConfig(path string) (*Config, error) {
 	}, nil
 }
 
-// MQTT publisher handler (без изменений)
+// MQTT publisher handler
 func publishHandler(client mqtt.Client, cfg *Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		text := r.URL.Query().Get("msg")
@@ -139,8 +139,7 @@ func main() {
 	}
 	log.Printf("Subscribed to topic: %s", cfg.MQTTTopic)
 
-	// 1. Сервируем фронтенд (index.html и статику) по адресу /
-	// Проверь путь: если frontend рядом с папкой cmd, путь "../frontend"
+	// 1. Сервируем фронтенд (index.html и статику)
 	http.Handle("/", http.FileServer(http.Dir("../frontend")))
 
 	// 2. Обработчики API
