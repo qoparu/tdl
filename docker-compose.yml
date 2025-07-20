@@ -1,5 +1,5 @@
 services:
-  # --- ПРОФИЛЬ 1: КЛИЕНТ-СЕРВЕРНАЯ СИСТЕМА ---
+  # --- PROFILE 1: CLIENT-SERVER SYSTEM ---
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -8,7 +8,7 @@ services:
       - "5672:5672"
       - "15672:15672"
     profiles:
-      # Этот сервис принадлежит профилю 'client-server'
+      # This service belongs to the 'client-server' profile
       - client-server
 
   server:
@@ -19,16 +19,27 @@ services:
     depends_on:
       - rabbitmq
     profiles:
-      # И этот сервис тоже принадлежит профилю 'client-server'
+      # This service also belongs to the 'client-server' profile
       - client-server
 
-  # --- ПРОФИЛЬ 2: P2P ДЕМОНСТРАЦИЯ ---
+  # ADDED: Frontend service
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    profiles:
+      # The frontend is also part of the 'client-server' profile
+      - client-server
+
+  # --- PROFILE 2: P2P DEMONSTRATION ---
 
   p2p-node:
     build:
-      # Собираем образ из папки p2p-demo
       context: ./p2p-demo
     container_name: p2p-node
     profiles:
-      # Этот сервис принадлежит профилю 'p2p'
+      # This service belongs to the 'p2p' profile
       - p2p

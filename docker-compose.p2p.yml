@@ -1,0 +1,5 @@
+services:
+  p2p-node:
+    build:
+      context: ./p2p-demo
+    container_name: p2p-node
