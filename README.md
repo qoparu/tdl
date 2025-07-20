@@ -90,6 +90,8 @@ This project demonstrates the following key concepts from the 'Distributed Progr
 # Запустить сервисы с профилем 'client-server'
 docker-compose up --profile client-server --build
 
+---
+
 <div align="center">
     <h3>✨ Crafted with ❤️ by <a href="https://github.com/qoparu">Aru</a> ✨</h3>
     <p>For the <b>DISTRIBUTED PROGRAMMING FOR WEB, IOT AND MOBILE SYSTEMS</b> exam</p>
