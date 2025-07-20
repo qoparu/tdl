@@ -150,6 +150,5 @@ func main() {
 
 	log.Printf("listening on %s", cfg.HTTPAddress)
 	if err := http.ListenAndServe(cfg.HTTPAddress, nil); err != nil {
-		log.Fatal(err)
+		log.Fatal(http.ListenAndServe(":8080", nil))
 	}
-}
