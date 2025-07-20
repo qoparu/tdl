@@ -84,8 +84,6 @@ This project demonstrates the following key concepts from the 'Distributed Progr
     * **Docker & Docker Compose**: For environment isolation and orchestration.
     * **GitHub Actions**: For automatic testing on every commit.
 
----
-
 ```bash
 # Запустить сервисы с профилем 'client-server'
 docker-compose up --profile client-server --build
