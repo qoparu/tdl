@@ -4,46 +4,107 @@
 <meta charset="UTF-8">
 <title>ToDo List</title>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<style>
+body { font-family: sans-serif; margin: 2em; }
+ul { padding-left: 1.5em; }
+input, button { font-size: 1em; }
+li { margin: 0.5em 0; cursor: pointer; }
+li.done { text-decoration: line-through; color: gray; }
+.delete-btn { margin-left: 1em; color: red; cursor: pointer; border: none; background: none; }
+#status { color: gray; }
+</style>
 </head>
-
 <body>
 <h1>ToDo List</h1>
+<div id="status"></div>
 <ul id="list"></ul>
-
 <input id="text" placeholder="New task" onkeydown="if(event.key==='Enter') addTask()"/>
 <button onclick="addTask()">Add</button>
 <script>
 const client = mqtt.connect('wss://test.mosquitto.org:8080');
-client.on('connect', () => console.log('mqtt connected'));
-client.on('error', err => console.error('MQTT error:', err));
+client.on('connect', () => setStatus('MQTT connected'));
+client.on('error', err => setStatus('MQTT error: ' + err));
 client.on('message', (topic, msg) => {
-  const e = JSON.parse(msg.toString());
-  if(e.type === 'created') appendTask(e.task);
+  try {
+    const e = JSON.parse(msg.toString());
+    if(e.type === 'created' || e.type === 'updated' || e.type === 'deleted') {
+      fetchTasks(); // просто обновим задачи
+      setStatus('MQTT event: ' + e.type);
+    }
+  } catch(e) {
+    setStatus('MQTT msg error: ' + e);
+  }
 });
 client.subscribe('aruzhan/tasks');
 
-function fetchTasks() {
-  fetch('/tasks').then(r => r.json()).then(ts => {
-    document.getElementById('list').innerHTML='';
-    ts.forEach(t => appendTask(t));
-  });
+function setStatus(txt) {
+  document.getElementById('status').textContent = txt;
 }
-function appendTask(t) {
+
+function fetchTasks() {
+  fetch('/tasks')
+    .then(r => r.json())
+    .then(ts => {
+      const ul = document.getElementById('list');
+      ul.innerHTML='';
+      ts.forEach((t, idx) => appendTask(t, idx));
+      setStatus('Задачи загружены');
+    })
+    .catch(() => setStatus('Ошибка загрузки задач'));
+}
+
+function appendTask(t, idx) {
   const li = document.createElement('li');
   li.innerText = t.text;
+  if (t.done) li.className = 'done';
+  li.onclick = () => toggleTask(idx, t.done);
+  // Кнопка удалить
+  const del = document.createElement('button');
+  del.textContent = '❌';
+  del.className = 'delete-btn';
+  del.onclick = (ev) => { ev.stopPropagation(); deleteTask(idx); };
+  li.appendChild(del);
   document.getElementById('list').appendChild(li);
 }
+
 function addTask() {
-  const text = document.getElementById('text').value;
+  const text = document.getElementById('text').value.trim();
+  if (!text) {
+    setStatus('Введите задачу');
+    return;
+  }
   fetch('/tasks', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({text})
-  });
-  document.getElementById('text').value = '';
+  })
+  .then(() => {
+    setStatus('Задача добавлена!');
+    document.getElementById('text').value = '';
+    fetchTasks();
+  })
+  .catch(() => setStatus('Ошибка добавления задачи'));
 }
+
+function toggleTask(idx, done) {
+  fetch(`/tasks/${idx}`, {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({done: !done})
+  })
+  .then(fetchTasks)
+  .catch(() => setStatus('Ошибка обновления задачи'));
+}
+
+function deleteTask(idx) {
+  fetch(`/tasks/${idx}`, {
+    method: 'DELETE'
+  })
+  .then(fetchTasks)
+  .catch(() => setStatus('Ошибка удаления задачи'));
+}
+
 fetchTasks();
 </script>
-
 </body>
 </html>
