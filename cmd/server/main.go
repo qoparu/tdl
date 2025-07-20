@@ -148,7 +148,8 @@ func main() {
 	http.HandleFunc("/tasks", tasksHandler)
 	http.HandleFunc("/tasks/", taskHandler)
 
-	log.Printf("listening on %s", cfg.HTTPAddress)
-	if err := http.ListenAndServe(cfg.HTTPAddress, nil); err != nil {
-		log.Fatal(http.ListenAndServe(":8080", nil))
+		log.Printf("listening on %s", cfg.HTTPAddress)
+		if err := http.ListenAndServe(cfg.HTTPAddress, nil); err != nil {
+			log.Fatal(http.ListenAndServe(":8080", nil))
+		}
 	}
