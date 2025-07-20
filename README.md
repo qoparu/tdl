@@ -86,22 +86,9 @@ This project demonstrates the following key concepts from the 'Distributed Progr
 
 ---
 
-## 👨‍💻 Local Development (without Docker)
-
-For manually running each component separately.
-
-1.  **Run the message broker** (e.g., RabbitMQ via Docker):
-    ```bash
-    docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
-    ```
-2.  **Run the Backend**:
-    ```bash
-    go run ./cmd/server -config config.yaml
-    ```
-3.  **Run the Frontend**:
-    ```bash
-    cd frontend && npm install && npm run dev
-    ```
+```bash
+# Запустить сервисы с профилем 'client-server'
+docker-compose up --profile client-server --build
 
 <div align="center">
     <h3>✨ Crafted with ❤️ by <a href="https://github.com/qoparu">Aru</a> ✨</h3>
