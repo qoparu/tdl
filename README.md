@@ -1,15 +1,25 @@
-# 🚀 To Do list
+# 🚀 To-Do List (Distributed Edition)
 
-[![Go](https://img.shields.io/badge/Go-1.21-blue?logo=go)](https://golang.org/)  
-[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org/)  
-[![MQTT](https://img.shields.io/badge/MQTT-✓-orange?logo=mqtt)](https://mqtt.org/)  
-[![ZeroMQ](https://img.shields.io/badge/ZeroMQ-✓-purple?logo=zeromq)](https://zeromq.org/)  
-[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-✓-red?logo=rabbitmq)](https://www.rabbitmq.com/)  
-[![net/rpc](https://img.shields.io/badge/net--rpc-✓-green)](https://pkg.go.dev/net/rpc)  
-[![YAML](https://img.shields.io/badge/YAML-✓-yellow?logo=yaml)](https://yaml.org/)  
-[![License: MIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/licenses/MIT)  
+[![Go](https://img.shields.io/badge/Go-1.21-blue?logo=go)](https://golang.org/)
+[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org/)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-✓-red?logo=rabbitmq)](https://www.rabbitmq.com/)
+[![Docker](https://img.shields.io/badge/Docker-✓-blue?logo=docker)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/licenses/MIT)
 
-Lightweight distributed to-do list with real-time push notifications and pluggable message brokers.
+A lightweight distributed To-Do List demonstrating various communication models between microservices and logical time synchronization.
+
+---
+
+## 🏛️ Architecture
+
+The system is built on a microservice architecture where components interact asynchronously via a message broker. This ensures loose coupling and high fault tolerance.
+
++----------+      +----------------+      +------------+      +----------+
+|          |----->|                |----->|            |----->|          |
+|  React   |      |  Server (Go)   |      |  RabbitMQ  |      | Worker   |
+| (Client) |      |   (API Gateway)|      |  (Broker)  |      |  (Go)    |
+|          |<-----|                |<-----|            |<-----|          |
++----------+      +----------------+      +------------+      +----------+
 
 ---
 
