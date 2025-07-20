@@ -5,19 +5,22 @@
 <title>ToDo List</title>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 </head>
+
 <body>
 <h1>ToDo List</h1>
 <ul id="list"></ul>
-<input id="text" placeholder="New task"/>
+
+<input id="text" placeholder="New task" onkeydown="if(event.key==='Enter') addTask()"/>
 <button onclick="addTask()">Add</button>
 <script>
-const client = mqtt.connect('ws://localhost:9001');
+const client = mqtt.connect('wss://test.mosquitto.org:8080');
 client.on('connect', () => console.log('mqtt connected'));
+client.on('error', err => console.error('MQTT error:', err));
 client.on('message', (topic, msg) => {
   const e = JSON.parse(msg.toString());
   if(e.type === 'created') appendTask(e.task);
 });
-client.subscribe('tasks');
+client.subscribe('aruzhan/tasks');
 
 function fetchTasks() {
   fetch('/tasks').then(r => r.json()).then(ts => {
@@ -37,8 +40,10 @@ function addTask() {
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({text})
   });
+  document.getElementById('text').value = '';
 }
 fetchTasks();
 </script>
+
 </body>
 </html>
