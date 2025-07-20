@@ -14,12 +14,15 @@ A lightweight distributed To-Do List demonstrating various communication models 
 
 The system is built on a microservice architecture where components interact asynchronously via a message broker. This ensures loose coupling and high fault tolerance.
 
+---
+
 +----------+      +----------------+      +------------+      +----------+
 |          |----->|                |----->|            |----->|          |
 |  React   |      |  Server (Go)   |      |  RabbitMQ  |      | Worker   |
 | (Client) |      |   (API Gateway)|      |  (Broker)  |      |  (Go)    |
 |          |<-----|                |<-----|            |<-----|          |
 +----------+      +----------------+      +------------+      +----------+
+---
 
 ---
 
