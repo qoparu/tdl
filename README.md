@@ -71,7 +71,6 @@ This is the recommended way to run the project. Docker Compose will automaticall
     ```bash
     docker-compose up --build
     ```
-    *(Примечание: в твоем `docker-compose.yml` могут использоваться профили. Если да, то команда `docker-compose --profile client-server up --build` тоже верна).*
 
 3.  **Access the application:**
     * **Frontend:** [http://localhost:5173](http://localhost:5173)
