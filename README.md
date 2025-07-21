@@ -8,8 +8,11 @@
 
 A lightweight distributed To-Do List demonstrating microservices, REST API, and **publish-subscribe** messaging via MQTT (Mosquitto).  
 Built for the *Distributed Programming for Web, IoT and Mobile Systems* exam.
-![img](TDL.png)
-![img](docker.png)
+
+
+<p align="center">
+  <img src="TDL.png" alt="img" />
+</p>
 
 ---
 
