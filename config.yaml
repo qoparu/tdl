@@ -1,6 +1,6 @@
 http:
   address: ":8080"
 mqtt:
-  broker: "tcp://localhost:1883"
+  broker: "tcp://mqtt:1883"
   client_id: "tdl-server"
   topic: "tasks"
