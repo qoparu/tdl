@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/qoparu/tdl/internal/task"
-	"github.com/qoparu/tdl/internal/mq"
 )
 
 // Фейковый брокер для теста

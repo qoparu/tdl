@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+    "strconv"
 
 	"github.com/qoparu/tdl/internal/mq"
 	"github.com/qoparu/tdl/internal/task"
@@ -37,7 +38,11 @@ func (s *Server) publish(e event) {
 func (s *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		tasks := s.Store.List()
+		tasks, err := s.Store.List()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		respond(w, tasks, http.StatusOK)
 	case http.MethodPost:
 		var t task.Task
@@ -45,7 +50,11 @@ func (s *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		t = s.Store.Create(t)
+		t, err := s.Store.Create(t)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		respond(w, t, http.StatusCreated)
 		s.publish(event{Type: "created", Task: t})
 	default:
@@ -54,7 +63,12 @@ func (s *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleTask(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Path[len("/tasks/"):]
+	idStr := r.URL.Path[len("/tasks/"):]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
 	switch r.Method {
 	case http.MethodPut:
 		var t task.Task
@@ -62,15 +76,16 @@ func (s *Server) handleTask(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		updated, ok := s.Store.Update(id, t)
-		if !ok {
+		updated, err := s.Store.Update(id, t)
+		if err != nil {
 			http.NotFound(w, r)
 			return
 		}
 		respond(w, updated, http.StatusOK)
 		s.publish(event{Type: "updated", Task: updated})
 	case http.MethodDelete:
-		if !s.Store.Delete(id) {
+		err := s.Store.Delete(id)
+		if err != nil {
 			http.NotFound(w, r)
 			return
 		}

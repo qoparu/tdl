@@ -7,9 +7,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/qoparu/TDL/internal/config"
-	"github.com/qoparu/TDL/internal/task"
-	"github.com/qoparu/TDL/internal/mq"
+	"github.com/qoparu/tdl/internal/config"
+	"github.com/qoparu/tdl/internal/task"
+	"github.com/qoparu/tdl/internal/mq"
 	"github.com/rs/cors"
 	"encoding/json"
 	"net/http"

@@ -39,3 +39,4 @@ func TestCreateTask(t *testing.T) {
 		t.Fatalf("expected 1 message published")
 	}
 }
+func (f *fakeBroker) Close() error { return nil }
