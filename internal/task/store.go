@@ -18,6 +18,7 @@ type Store interface {
 	Create(t Task) (Task, error)
 	Update(id int, t Task) (Task, error)
 	Delete(id int) error
+	Get(id int) (Task, error)
 }
 
 // InMemoryStore is updated to use int IDs

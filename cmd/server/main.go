@@ -71,7 +71,12 @@ func main() {
 	r.Put("/tasks/{id}", api.handleUpdateTask)
 	r.Delete("/tasks/{id}", api.handleDeleteTask)
 
-	handler := cors.Default().Handler(r)
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:5173"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type"},
+	})
+	handler := c.Handler(r)
 
 	log.Println("Starting server on", cfg.HTTP.Address)
 	if err := http.ListenAndServe(cfg.HTTP.Address, handler); err != nil {
@@ -112,16 +117,28 @@ func (s *ApiServer) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-	var t task.Task
-	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+
+	// 1. Сначала получаем текущую задачу из БД
+	currentTask, err := s.store.Get(id)
+	if err != nil {
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
+	}
+
+	// 2. Декодируем изменения из запроса ПОВЕРХ существующей задачи
+	// Это обновит только те поля, что пришли в JSON (т.е. поле Done)
+	if err := json.NewDecoder(r.Body).Decode(&currentTask); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-	updatedTask, err := s.store.Update(id, t)
+
+	// 3. Сохраняем полностью обновленную задачу
+	updatedTask, err := s.store.Update(id, currentTask)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	
 	writeJSON(w, updatedTask, http.StatusOK)
 	s.publishEvent("updated", updatedTask)
 }
@@ -133,6 +150,7 @@ func (s *ApiServer) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
+	log.Printf("Received request to DELETE task with ID: %d", id)
 	err = s.store.Delete(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -145,9 +146,9 @@
     </div>
     <ul id="list"></ul>
   </div>
-
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-// === ИЗМЕНЕНИЕ 1: Добавляем константу с адресом API ===
+
 const API_BASE_URL = 'http://localhost:8080';
 
 const client = mqtt.connect('ws://localhost:9001');
@@ -227,7 +228,7 @@ function addTask() {
 }
 
 function toggleTask(id, done) {
-  // === ИЗМЕНЕНИЕ 4: Используем полный адрес ===
+
   fetch(`${API_BASE_URL}/tasks/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -238,12 +239,29 @@ function toggleTask(id, done) {
 }
 
 function deleteTask(id) {
-  // === ИЗМЕНЕНИЕ 5: Используем полный адрес ===
   fetch(`${API_BASE_URL}/tasks/${id}`, {
     method: 'DELETE'
   })
-    .then(fetchTasks)
-    .catch(() => setStatus('Failed to delete task'));
+  .then(() => {
+      fetchTasks();
+      Toastify({
+        text: "Task is deleted!",
+        duration: 3000,
+        gravity: "top", // 'top' или 'bottom'
+        position: "right", // 'left', 'center' или 'right'
+        backgroundColor: "#ff6b6b", 
+      }).showToast();
+  })
+  .catch(() => {
+      // Можно и ошибки показывать так же
+      Toastify({
+        text: "Error deleting task!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#e03131",
+      }).showToast();
+  });
 }
 
 function escapeHtml(s) {

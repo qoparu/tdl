@@ -41,6 +41,12 @@ func (s *PostgresStore) Create(t Task) (Task, error) {
 	return t, nil
 }
 
+func (s *PostgresStore) Get(id int) (Task, error) {
+	var t Task
+	err := s.db.QueryRow(context.Background(), "SELECT id, text, done FROM tasks WHERE id = $1", id).Scan(&t.ID, &t.Text, &t.Done)
+	return t, err
+}
+
 func (s *PostgresStore) Update(id int, t Task) (Task, error) {
 	_, err := s.db.Exec(context.Background(), "UPDATE tasks SET text = $1, done = $2 WHERE id = $3", t.Text, t.Done, id)
 	if err != nil {
