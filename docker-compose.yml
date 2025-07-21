@@ -7,6 +7,18 @@ services:
     profiles:
       - client-server
 
+  db:
+    image: postgres:15
+    container_name: db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    restart: always
+    profiles:
+      - client-server
+
   server:
     build: .
     container_name: api-server
@@ -14,6 +26,9 @@ services:
       - "8080:8080"
     depends_on:
       - mqtt
+      - db
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
     volumes:
       - ./config.yaml:/app/config.yaml
     profiles:
