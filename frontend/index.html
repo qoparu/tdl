@@ -93,7 +93,6 @@
       padding: 0;
       width: 100%;
     }
-    /* Стили для анимаций */
     .task-item {
       background: #f8f9fe;
       display: flex;
@@ -118,7 +117,7 @@
     .task-item.removing {
       opacity: 0;
       transform: scale(0.9);
-      margin-bottom: -40px; /* Чтобы список подтягивался плавно */
+      margin-bottom: -40px;
       padding-top: 0;
       padding-bottom: 0;
     }
@@ -146,6 +145,11 @@
     .delete-btn:hover {
       color: #fff;
       background: #ff4461;
+    }
+    /* === ADDED FOR TOASTS === */
+    .custom-toast {
+      min-width: 150px;
+      text-align: center;
     }
     @media (max-width: 600px) {
       .container { max-width: 97vw; padding: 1.1em 0.8em; }
@@ -177,8 +181,7 @@
         const e = JSON.parse(msg.toString());
         if (e.type === 'created' || e.type === 'updated' || e.type === 'deleted') {
           fetchTasks();
-          // Показываем уведомление о событии от другого клиента
-          Toastify({ text: `🔄 Tasks updated via MQTT`, duration: 5000, gravity: 'bottom' }).showToast();
+          Toastify({ text: `🔄 Tasks updated via MQTT`, duration: 2000, gravity: 'bottom', className: "custom-toast" }).showToast();
         }
       } catch (e) {
         setStatus('MQTT msg error: ' + e);
@@ -205,7 +208,7 @@
           const ul = document.getElementById('list');
           ul.innerHTML = '';
           if (Array.isArray(tasks) && tasks.length > 0) {
-            tasks.forEach(t => appendTask(t, false)); // Не анимируем при начальной загрузке
+            tasks.forEach(t => appendTask(t, false));
             setStatus(`Tasks loaded (${tasks.length})`);
           } else {
             setStatus('No tasks yet. Add one!');
@@ -217,17 +220,17 @@
     function appendTask(t, animate = true) {
       const li = document.createElement('li');
       li.className = 'task-item' + (t.done ? ' done' : '');
-      li.dataset.id = t.id; // Добавляем ID для легкого поиска
+      li.dataset.id = t.id;
       li.innerHTML = `
         <span>${escapeHtml(t.text)}</span>
         <button class="delete-btn" title="Delete" onclick="event.stopPropagation(); deleteTask(${t.id});">&times;</button>
       `;
       li.onclick = () => toggleTask(t.id, t.done);
       
+      const ul = document.getElementById('list');
       if (animate) {
         li.classList.add('adding');
         ul.appendChild(li);
-        // "Магия" для срабатывания CSS-анимации
         setTimeout(() => li.classList.remove('adding'), 10);
       } else {
         ul.appendChild(li);
@@ -238,7 +241,7 @@
       const inp = document.getElementById('text');
       const text = inp.value.trim();
       if (!text) {
-        Toastify({ text: "Please enter a task", backgroundColor: "#f39c12" }).showToast();
+        Toastify({ text: "Please enter a task", className: "custom-toast", style: { background: "linear-gradient(to right, #f1c40f, #f39c12)"} }).showToast();
         inp.focus();
         return;
       }
@@ -253,10 +256,10 @@
       .then(createdTask => {
         inp.value = '';
         inp.focus();
-        appendTask(createdTask, true); // Добавляем с анимацией
-        Toastify({ text: "Task added!", backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)" }).showToast();
+        appendTask(createdTask, true);
+        Toastify({ text: "Task added!", className: "custom-toast", style: { background: "linear-gradient(to right, #00b09b, #96c93d)"} }).showToast();
       })
-      .catch(() => Toastify({ text: "Error adding task", backgroundColor: "#e74c3c" }).showToast())
+      .catch(() => Toastify({ text: "Error adding task", className: "custom-toast", style: { background: "linear-gradient(to right, #E74C3C, #C0392B)"} }).showToast())
       .finally(() => setLoading(false));
     }
 
@@ -269,14 +272,13 @@
       })
       .then(res => res.ok ? res.json() : Promise.reject('Failed to update'))
       .then(updatedTask => {
-        // Обновляем вид задачи в списке без полной перезагрузки
         const li = document.querySelector(`li[data-id='${id}']`);
         if (li) {
           li.className = 'task-item' + (updatedTask.done ? ' done' : '');
         }
-        Toastify({ text: "Task updated!", backgroundColor: "#3498db" }).showToast();
+        Toastify({ text: "Task updated!", className: "custom-toast", style: { background: "linear-gradient(to right, #3498db, #2980b9)"} }).showToast();
       })
-      .catch(() => Toastify({ text: "Error updating task", backgroundColor: "#e74c3c" }).showToast())
+      .catch(() => Toastify({ text: "Error updating task", className: "custom-toast", style: { background: "linear-gradient(to right, #E74C3C, #C0392B)"} }).showToast())
       .finally(() => setLoading(false));
     }
 
@@ -291,20 +293,17 @@
         
         if (li) {
           li.classList.add('removing');
-          // Ждем завершения анимации перед удалением из DOM
           li.addEventListener('transitionend', () => li.remove());
         }
-        Toastify({ text: "Task deleted!", backgroundColor: "#e74c3c" }).showToast();
+        Toastify({ text: "Task deleted!", className: "custom-toast", style: { background: "linear-gradient(to right, #E74C3C, #C0392B)"} }).showToast();
       })
-      .catch(() => Toastify({ text: "Error deleting task", backgroundColor: "#e74c3c" }).showToast());
+      .catch(() => Toastify({ text: "Error deleting task", className: "custom-toast", style: { background: "linear-gradient(to right, #E74C3C, #C0392B)"} }).showToast());
     }
 
     function escapeHtml(s) {
       return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
-    // Первоначальная загрузка
-    const ul = document.getElementById('list');
     fetchTasks();
   </script>
 </body>
