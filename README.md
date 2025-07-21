@@ -60,7 +60,8 @@ This is the recommended way to run the project. Docker Compose will automaticall
 1.1 **wait-for-it.sh**
     ```bash
     Make sure wait-for-it.sh is present in the project root (already included in this repo).
-    ```bash
+    ```
+    
 This script ensures the backend waits until the database is ready before starting.
 2.  **Run all containers** with a single command:
     ```bash
