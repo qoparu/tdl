@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-    "strconv"
+	"strconv"
 
 	"github.com/qoparu/tdl/internal/mq"
 	"github.com/qoparu/tdl/internal/task"
@@ -42,6 +42,9 @@ func (s *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		}
+		if tasks == nil {
+			tasks = []task.Task{}
 		}
 		respond(w, tasks, http.StatusOK)
 	case http.MethodPost:
