@@ -100,4 +100,4 @@ To run backend tests:
 go test ./...
 ```
 
-<div align="center"> <h3>✨ Crafted with ❤️ by <a href="https://github.com/qoparu">Aru</a> ✨</h3> <p>For the <b>DISTRIBUTED PROGRAMMING FOR WEB, IOT AND MOBILE SYSTEMS</b> exam</p> </div> ```
+<div align="center"> <h3>✨ Crafted with ❤️ by <a href="https://github.com/qoparu">Aru</a> ✨</h3> <p>For the <b>DISTRIBUTED PROGRAMMING FOR WEB, IOT AND MOBILE SYSTEMS</b> exam</p> </div>
