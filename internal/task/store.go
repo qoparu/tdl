@@ -7,12 +7,13 @@ import (
 )
 
 type Task struct {
-	ID   int    `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
+	ID    int    `json:"id"`
+	Text  string `json:"text"`
+	Done  bool   `json:"done"`
+	Clock int    `json:"clock"` // Add Clock field for Lamport timestamp
 }
 
-// Store interface now uses int for ID
+// Store interface is correct and already includes Get
 type Store interface {
 	List() ([]Task, error)
 	Create(t Task) (Task, error)
@@ -29,7 +30,19 @@ type InMemoryStore struct {
 }
 
 func NewInMemoryStore() *InMemoryStore {
-	return &InMemoryStore{tasks: make(map[int]Task)}
+	// Initialize with next=0 so the first ID is 1
+	return &InMemoryStore{tasks: make(map[int]Task), next: 0}
+}
+
+// Implement the missing Get method for InMemoryStore
+func (s *InMemoryStore) Get(id int) (Task, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	t, ok := s.tasks[id]
+	if !ok {
+		return Task{}, fmt.Errorf("task with id %d not found", id)
+	}
+	return t, nil
 }
 
 func (s *InMemoryStore) List() ([]Task, error) {

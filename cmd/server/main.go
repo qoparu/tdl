@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"log"
-	"os"
-
 	"encoding/json"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -17,21 +17,28 @@ import (
 	"github.com/rs/cors"
 )
 
-// ApiServer держит store и брокер
 type ApiServer struct {
 	store  task.Store
 	broker mq.Broker
 	topic  string
+	clock  int
+	mu     sync.Mutex
+}
+
+// tick безопасно увеличивает счетчик и возвращает новое значение
+func (s *ApiServer) tick() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.clock++
+	return s.clock
 }
 
 func main() {
-	// Загружаем конфиг
 	cfg, err := config.Load("config.yaml")
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Подключаемся к БД
 	databaseUrl := os.Getenv("DATABASE_URL")
 	if databaseUrl == "" {
 		log.Fatal("DATABASE_URL environment variable is not set")
@@ -45,14 +52,14 @@ func main() {
 		CREATE TABLE IF NOT EXISTS tasks (
 			id SERIAL PRIMARY KEY,
 			text TEXT NOT NULL,
-			done BOOLEAN DEFAULT FALSE
+			done BOOLEAN DEFAULT FALSE,
+			clock INTEGER DEFAULT 0
 		);
 	`)
 	if err != nil {
 		log.Fatalf("Unable to create tasks table: %v\n", err)
 	}
 
-	// Брокер MQTT
 	broker, err := mq.NewMQTTBroker(cfg.MQTT.Broker, cfg.MQTT.ClientID)
 	if err != nil {
 		log.Fatalf("Can't connect to MQTT broker: %v", err)
@@ -101,6 +108,7 @@ func (s *ApiServer) handleCreateTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
+	t.Clock = s.tick()
 	createdTask, err := s.store.Create(t)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -117,28 +125,21 @@ func (s *ApiServer) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-
-	// 1. Сначала получаем текущую задачу из БД
 	currentTask, err := s.store.Get(id)
 	if err != nil {
 		http.Error(w, "Task not found", http.StatusNotFound)
 		return
 	}
-
-	// 2. Декодируем изменения из запроса ПОВЕРХ существующей задачи
-	// Это обновит только те поля, что пришли в JSON (т.е. поле Done)
 	if err := json.NewDecoder(r.Body).Decode(&currentTask); err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
-
-	// 3. Сохраняем полностью обновленную задачу
+	currentTask.Clock = s.tick()
 	updatedTask, err := s.store.Update(id, currentTask)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
 	writeJSON(w, updatedTask, http.StatusOK)
 	s.publishEvent("updated", updatedTask)
 }
@@ -157,7 +158,7 @@ func (s *ApiServer) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
-	s.publishEvent("deleted", task.Task{ID: id})
+	s.publishEvent("deleted", task.Task{ID: id, Clock: s.tick()})
 }
 
 func writeJSON(w http.ResponseWriter, v interface{}, code int) {

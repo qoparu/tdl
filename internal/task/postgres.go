@@ -14,7 +14,7 @@ func NewPostgresStore(db *pgxpool.Pool) *PostgresStore {
 }
 
 func (s *PostgresStore) List() ([]Task, error) {
-	rows, err := s.db.Query(context.Background(), "SELECT id, text, done FROM tasks ORDER BY id")
+	rows, err := s.db.Query(context.Background(), "SELECT id, text, done, clock FROM tasks ORDER BY id")
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (s *PostgresStore) List() ([]Task, error) {
 	var tasks []Task
 	for rows.Next() {
 		var t Task
-		if err := rows.Scan(&t.ID, &t.Text, &t.Done); err != nil {
+		if err := rows.Scan(&t.ID, &t.Text, &t.Done, &t.Clock); err != nil {
 			return nil, err
 		}
 		tasks = append(tasks, t)
@@ -33,7 +33,7 @@ func (s *PostgresStore) List() ([]Task, error) {
 
 func (s *PostgresStore) Create(t Task) (Task, error) {
 	var id int
-	err := s.db.QueryRow(context.Background(), "INSERT INTO tasks (text, done) VALUES ($1, $2) RETURNING id", t.Text, t.Done).Scan(&id)
+	err := s.db.QueryRow(context.Background(), "INSERT INTO tasks (text, done, clock) VALUES ($1, $2, $3) RETURNING id", t.Text, t.Done, t.Clock).Scan(&id)
 	if err != nil {
 		return Task{}, err
 	}
@@ -43,12 +43,12 @@ func (s *PostgresStore) Create(t Task) (Task, error) {
 
 func (s *PostgresStore) Get(id int) (Task, error) {
 	var t Task
-	err := s.db.QueryRow(context.Background(), "SELECT id, text, done FROM tasks WHERE id = $1", id).Scan(&t.ID, &t.Text, &t.Done)
+	err := s.db.QueryRow(context.Background(), "SELECT id, text, done, clock FROM tasks WHERE id = $1", id).Scan(&t.ID, &t.Text, &t.Done, &t.Clock)
 	return t, err
 }
 
 func (s *PostgresStore) Update(id int, t Task) (Task, error) {
-	_, err := s.db.Exec(context.Background(), "UPDATE tasks SET text = $1, done = $2 WHERE id = $3", t.Text, t.Done, id)
+	_, err := s.db.Exec(context.Background(), "UPDATE tasks SET text = $1, done = $2, clock = $3 WHERE id = $4", t.Text, t.Done, t.Clock, id)
 	if err != nil {
 		return Task{}, err
 	}

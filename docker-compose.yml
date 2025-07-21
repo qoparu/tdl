@@ -6,7 +6,7 @@ services:
       - "1884:1883"
       - "9001:9001" 
     volumes:
-    - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
     networks:
       - default
 
@@ -21,6 +21,9 @@ services:
     restart: always
     profiles:
       - client-server
+    # --- ДОБАВЛЕНО ---
+    networks:
+      - default
 
   server:
     build: .
@@ -36,6 +39,9 @@ services:
       - ./config.yaml:/app/config.yaml
     profiles:
       - client-server
+    # --- ДОБАВЛЕНО ---
+    networks:
+      - default
 
   frontend:
     build: ./frontend
@@ -46,3 +52,11 @@ services:
       - server
     profiles:
       - client-server
+    # --- ДОБАВЛЕНО ---
+    networks:
+      - default
+
+# --- Явно определяем сеть ---
+networks:
+  default:
+    driver: bridge
