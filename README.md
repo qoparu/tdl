@@ -57,6 +57,12 @@ This is the recommended way to run the project. Docker Compose will automaticall
     git clone https://github.com/qoparu/tdl.git
     cd tdl
     ```
+1.1 **wait-for-it.sh**
+    ```bash
+    Make sure wait-for-it.sh is present in the project root (already included in this repo).
+    ```
+    
+This script ensures the backend waits until the database is ready before starting.
 2.  **Run all containers** with a single command:
     ```bash
     docker-compose --profile client-server up --build
