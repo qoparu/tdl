@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/example/tdl/internal/mq"
-	"github.com/example/tdl/internal/task"
+	"github.com/qoparu/tdl/internal/mq"
+	"github.com/qoparu/tdl/internal/task"
 )
 
 type Server struct {

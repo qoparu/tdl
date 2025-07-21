@@ -1,3 +1,4 @@
+// File: internal/task/store.go
 package task
 
 import (
@@ -6,65 +7,67 @@ import (
 )
 
 type Task struct {
-	ID   string `json:"id"`
+	ID   int    `json:"id"`
 	Text string `json:"text"`
 	Done bool   `json:"done"`
 }
 
+// Store interface now uses int for ID
 type Store interface {
-	List() []Task
-	Create(t Task) Task
-	Update(id string, t Task) (Task, bool)
-	Delete(id string) bool
+	List() ([]Task, error)
+	Create(t Task) (Task, error)
+	Update(id int, t Task) (Task, error)
+	Delete(id int) error
 }
 
+// InMemoryStore is updated to use int IDs
 type InMemoryStore struct {
 	mu    sync.Mutex
-	tasks map[string]Task
+	tasks map[int]Task
 	next  int
 }
 
 func NewInMemoryStore() *InMemoryStore {
-	return &InMemoryStore{tasks: make(map[string]Task)}
+	return &InMemoryStore{tasks: make(map[int]Task)}
 }
 
-func (s *InMemoryStore) List() []Task {
+func (s *InMemoryStore) List() ([]Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	out := make([]Task, 0, len(s.tasks))
 	for _, t := range s.tasks {
 		out = append(out, t)
 	}
-	return out
+	return out, nil
 }
 
-func (s *InMemoryStore) Create(t Task) Task {
+func (s *InMemoryStore) Create(t Task) (Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.next++
-	t.ID = fmt.Sprintf("%d", s.next)
+	t.ID = s.next
 	s.tasks[t.ID] = t
-	return t
+	return t, nil
 }
 
-func (s *InMemoryStore) Update(id string, t Task) (Task, bool) {
+func (s *InMemoryStore) Update(id int, t Task) (Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	_, ok := s.tasks[id]
 	if !ok {
-		return Task{}, false
+		return Task{}, fmt.Errorf("task with id %d not found", id)
 	}
 	t.ID = id
 	s.tasks[id] = t
-	return t, true
+	return t, nil
 }
 
-func (s *InMemoryStore) Delete(id string) bool {
+func (s *InMemoryStore) Delete(id int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.tasks[id]; !ok {
-		return false
+		return fmt.Errorf("task with id %d not found", id)
 	}
 	delete(s.tasks, id)
-	return true
+	return nil
 }

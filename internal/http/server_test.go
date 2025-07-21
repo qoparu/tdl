@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/example/tdl/internal/task"
+	"github.com/qoparu/tdl/internal/task"
 )
 
 type fakeBroker struct{ msgs [][]byte }

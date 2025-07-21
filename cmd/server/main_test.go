@@ -1,49 +1,63 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
+
+	"github.com/qoparu/tdl/internal/task"
+	"github.com/qoparu/tdl/internal/mq"
 )
 
-func TestPublishHandler(t *testing.T) {
-	// 1. Подготовка данных для теста
-	// Создаем фейковую конфигурацию
-	testCfg := &Config{
-		MQTTTopic: "test/topic",
-	}
-	// Сообщение, которое мы хотим отправить
-	testMessage := "hello from test"
+// Фейковый брокер для теста
+type fakeBroker struct {
+	published [][]byte
+}
 
-	// 2. Создание "фейкового" запроса
-	// Запрос теперь GET на /publish с параметром ?msg=...
-	req, err := http.NewRequest("GET", "/publish?msg="+testMessage, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+func (f *fakeBroker) Publish(topic string, payload []byte) error {
+	f.published = append(f.published, payload)
+	return nil
+}
 
-	// 3. Создание "фейкового" сборщика ответов
+func (f *fakeBroker) Close() error { return nil }
+
+func setupTestServer() (*ApiServer, *fakeBroker) {
+	store := task.NewInMemoryStore()
+	broker := &fakeBroker{}
+	return &ApiServer{
+		store:  store,
+		broker: broker,
+		topic:  "test-topic",
+	}, broker
+}
+
+func TestCreateTask_PublishesMQTT(t *testing.T) {
+	api, broker := setupTestServer()
+
 	rr := httptest.NewRecorder()
+	body, _ := json.Marshal(task.Task{Text: "Test"})
+	req, _ := http.NewRequest("POST", "/tasks", bytes.NewReader(body))
+	api.handleCreateTask(rr, req)
 
-	// 4. Вызов тестируемого обработчика
-	// Вызываем publishHandler, передавая nil вместо реального MQTT клиента.
-	// В `publishHandler` мы добавили проверку `if client != nil`, чтобы тест не падал.
-	handler := publishHandler(nil, testCfg)
-	handler.ServeHTTP(rr, req)
-
-	// 5. Проверка результата
-	// Проверяем, что HTTP-статус код ответа - 200 OK
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", rr.Code)
 	}
 
-	// Проверяем тело ответа
-	// Ожидаем, что в ответе будет строка "Published message: hello from test"
-	expectedBody := "Published message: " + testMessage
-	if !strings.Contains(rr.Body.String(), expectedBody) {
-		t.Errorf("handler returned unexpected body: got %v want to contain %q",
-			rr.Body.String(), expectedBody)
+	if len(broker.published) != 1 {
+		t.Fatalf("expected 1 MQTT publish, got %d", len(broker.published))
+	}
+
+	var event struct {
+		Type string    `json:"type"`
+		Task task.Task `json:"task"`
+	}
+	json.Unmarshal(broker.published[0], &event)
+	if event.Type != "created" {
+		t.Errorf("expected event type 'created', got %s", event.Type)
+	}
+	if event.Task.Text != "Test" {
+		t.Errorf("expected task text 'Test', got %s", event.Task.Text)
 	}
 }

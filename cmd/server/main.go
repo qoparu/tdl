@@ -1,155 +1,162 @@
 package main
 
 import (
-	"encoding/json"
-	"flag"
-	"fmt"
+	"context"
 	"log"
+	"os"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/qoparu/TDL/internal/config"
+	"github.com/qoparu/TDL/internal/task"
+	"github.com/qoparu/TDL/internal/mq"
+	"github.com/rs/cors"
+	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
-	"sync"
-	"time"
-
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-type Config struct {
-	MQTTBroker   string
-	MQTTClientID string
-	MQTTTopic    string
-	HTTPAddress  string
-}
-
-type Task struct {
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-}
-
-var (
-	tasks []Task
-	mu    sync.Mutex
-)
-
-func loadConfig(path string) (*Config, error) {
-	_ = path
-	return &Config{
-		MQTTBroker:   "tcp://test.mosquitto.org:1883",
-		MQTTClientID: "go-mqtt-sample",
-		MQTTTopic:    "aruzhan/tasks",
-		HTTPAddress:  ":8080",
-	}, nil
-}
-
-// MQTT publisher handler
-func publishHandler(client mqtt.Client, cfg *Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		text := r.URL.Query().Get("msg")
-		if text == "" {
-			text = fmt.Sprintf("Hello MQTT! Time: %s", time.Now())
-		}
-		if client != nil {
-			token := client.Publish(cfg.MQTTTopic, 0, false, text)
-			token.Wait()
-		}
-		fmt.Fprintf(w, "Published message: %s\n", text)
-		log.Printf("Published message: %s", text)
-	}
-}
-
-// REST API для задач
-func tasksHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		mu.Lock()
-		defer mu.Unlock()
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(tasks)
-	case "POST":
-		var t Task
-		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
-			http.Error(w, "Bad request", 400)
-			return
-		}
-		mu.Lock()
-		tasks = append(tasks, t)
-		mu.Unlock()
-		w.WriteHeader(http.StatusCreated)
-	default:
-		http.Error(w, "Method not allowed", 405)
-	}
-}
-
-func taskHandler(w http.ResponseWriter, r *http.Request) {
-	idxStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
-	idx, err := strconv.Atoi(idxStr)
-	if err != nil || idx < 0 {
-		http.Error(w, "Invalid index", 400)
-		return
-	}
-	mu.Lock()
-	defer mu.Unlock()
-	if idx >= len(tasks) {
-		http.Error(w, "Not found", 404)
-		return
-	}
-	switch r.Method {
-	case "PATCH":
-		var patch struct{ Done bool }
-		if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
-			http.Error(w, "Bad request", 400)
-			return
-		}
-		tasks[idx].Done = patch.Done
-		w.WriteHeader(204)
-	case "DELETE":
-		tasks = append(tasks[:idx], tasks[idx+1:]...)
-		w.WriteHeader(204)
-	default:
-		http.Error(w, "Method not allowed", 405)
-	}
+// ApiServer держит store и брокер
+type ApiServer struct {
+	store  task.Store
+	broker mq.Broker
+	topic  string
 }
 
 func main() {
-	cfgPath := flag.String("config", "config.yaml", "path to config")
-	flag.Parse()
-
-	cfg, err := loadConfig(*cfgPath)
+	// Загружаем конфиг
+	cfg, err := config.Load("config.yaml")
 	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// Подключаемся к БД
+	databaseUrl := os.Getenv("DATABASE_URL")
+	if databaseUrl == "" {
+		log.Fatal("DATABASE_URL environment variable is not set")
+	}
+	dbpool, err := pgxpool.New(context.Background(), databaseUrl)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v\n", err)
+	}
+	defer dbpool.Close()
+	_, err = dbpool.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS tasks (
+			id SERIAL PRIMARY KEY,
+			text TEXT NOT NULL,
+			done BOOLEAN DEFAULT FALSE
+		);
+	`)
+	if err != nil {
+		log.Fatalf("Unable to create tasks table: %v\n", err)
+	}
+
+	// Брокер MQTT
+	broker, err := mq.NewMQTTBroker(cfg.MQTT.Broker, cfg.MQTT.ClientID)
+	if err != nil {
+		log.Fatalf("Can't connect to MQTT broker: %v", err)
+	}
+	defer broker.Close()
+
+	api := &ApiServer{
+		store:  task.NewPostgresStore(dbpool),
+		broker: broker,
+		topic:  cfg.MQTT.Topic,
+	}
+
+	r := chi.NewRouter()
+	r.Get("/tasks", api.handleGetTasks)
+	r.Post("/tasks", api.handleCreateTask)
+	r.Put("/tasks/{id}", api.handleUpdateTask)
+	r.Delete("/tasks/{id}", api.handleDeleteTask)
+
+	handler := cors.Default().Handler(r)
+
+	log.Println("Starting server on", cfg.HTTP.Address)
+	if err := http.ListenAndServe(cfg.HTTP.Address, handler); err != nil {
 		log.Fatal(err)
 	}
+}
 
-	var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
-		log.Printf("Received message on topic %s: %s\n", msg.Topic(), msg.Payload())
+// --- HTTP Handlers ---
+
+func (s *ApiServer) handleGetTasks(w http.ResponseWriter, r *http.Request) {
+	tasks, err := s.store.List()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+	writeJSON(w, tasks, http.StatusOK)
+}
 
-	opts := mqtt.NewClientOptions().
-		AddBroker(cfg.MQTTBroker).
-		SetClientID(cfg.MQTTClientID).
-		SetDefaultPublishHandler(messagePubHandler)
-
-	client := mqtt.NewClient(opts)
-	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatal(token.Error())
+func (s *ApiServer) handleCreateTask(w http.ResponseWriter, r *http.Request) {
+	var t task.Task
+	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
 	}
-	defer client.Disconnect(250)
-
-	if token := client.Subscribe(cfg.MQTTTopic, 1, messagePubHandler); token.Wait() && token.Error() != nil {
-		log.Fatal(token.Error())
+	createdTask, err := s.store.Create(t)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	log.Printf("Subscribed to topic: %s", cfg.MQTTTopic)
+	writeJSON(w, createdTask, http.StatusCreated)
+	s.publishEvent("created", createdTask)
+}
 
-	// 1. Сервируем фронтенд (index.html и статику)
-	http.Handle("/", http.FileServer(http.Dir("../frontend")))
-
-	// 2. Обработчики API
-    http.Handle("/", http.FileServer(http.Dir("../../frontend")))
-	http.HandleFunc("/publish", publishHandler(client, cfg))
-	http.HandleFunc("/tasks", tasksHandler)
-	http.HandleFunc("/tasks/", taskHandler)
-
-		log.Printf("listening on %s", cfg.HTTPAddress)
-		if err := http.ListenAndServe(cfg.HTTPAddress, nil); err != nil {
-			log.Fatal(http.ListenAndServe(":8080", nil))
-		}
+func (s *ApiServer) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
 	}
+	var t task.Task
+	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	updatedTask, err := s.store.Update(id, t)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, updatedTask, http.StatusOK)
+	s.publishEvent("updated", updatedTask)
+}
+
+func (s *ApiServer) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+	err = s.store.Delete(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+	s.publishEvent("deleted", task.Task{ID: id})
+}
+
+func writeJSON(w http.ResponseWriter, v interface{}, code int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(v)
+}
+
+// --- MQTT publish ---
+
+func (s *ApiServer) publishEvent(eventType string, t task.Task) {
+	event := struct {
+		Type string    `json:"type"`
+		Task task.Task `json:"task"`
+	}{
+		Type: eventType,
+		Task: t,
+	}
+	payload, _ := json.Marshal(event)
+	_ = s.broker.Publish(s.topic, payload)
+}
