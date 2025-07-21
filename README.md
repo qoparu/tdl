@@ -74,7 +74,7 @@ This is the recommended way to run the project. Docker Compose will automaticall
 
 3.  **Access the application:**
     * **Frontend:** [http://localhost:5173](http://localhost:5173)
-    * **Backend API:** [http://localhost:8080](http://localhost:8080)
+    * **Backend API:** [http://localhost:8080](http://localhost:8080) / [http://localhost:8080/tasks](http://localhost:8080/tasks)
       
 ---
 
