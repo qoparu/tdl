@@ -69,7 +69,7 @@ This is the recommended way to run the project. Docker Compose will automaticall
 
 2.  **Run the entire stack:**
     ```bash
-    docker-compose up --build
+    docker-compose --profile client-server up --build
     ```
 
 3.  **Access the application:**
