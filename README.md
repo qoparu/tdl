@@ -1,7 +1,7 @@
 # 🚀 To-Do List (Distributed Edition)
 
 [![Go](https://img.shields.io/badge/Go-1.21%2B-blue?logo=go)](https://golang.org/)
-[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-yellow?logo=javascript)](https://www.javascript.com/)
 [![MQTT](https://img.shields.io/badge/MQTT-Mosquitto-blue?logo=eclipse-mosquitto)](https://mosquitto.org/)
 [![Docker](https://img.shields.io/badge/Docker-✓-blue?logo=docker)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/licenses/MIT)
@@ -9,17 +9,27 @@
 A lightweight distributed To-Do List demonstrating microservices, REST API, and **publish-subscribe** messaging via MQTT (Mosquitto).  
 Built for the *Distributed Programming for Web, IoT and Mobile Systems* exam.
 
+
+<p align="center">
+  <img src="TDL.png" alt="img" />
+</p>
+
 ---
 
 ## 🏛️ Architecture
 
 This system is built on a microservice architecture. Components interact asynchronously via an MQTT message broker, ensuring loose coupling and high fault tolerance.
 
+
+<p align="center">
+  <img src="docker.png" alt="img" />
+</p>
+
 ---
 
 ## 🎯 Basic Requirements  
 - **Go 1.21+** (backend)  
-- **Node.js 16+** (frontend)  
+- **JS** (frontend)  
 - **MQTT broker** (e.g. Mosquitto)  
 - **Docker** (optional for broker)  
 - **YAML** config file  
@@ -32,11 +42,10 @@ This system is built on a microservice architecture. Components interact asynchr
 | Layer               | Technology                               |
 |---------------------|------------------------------------------|
 | **Backend**         | Go, net/http                             |
-| **Frontend**        | React (Vite)                             |
+| **Frontend**        | Vanilla JS, HTML5, CSS3                  |
 | **Messaging**       | MQTT (Mosquitto, Eclipse Paho)           |
 | **Serialization**   | JSON (API) / YAML (config)               |
 | **Storage**         | In-memory / PostgreSQL (optional)        |
-| **Clocks & Sync**   | Lamport logical clocks                   |
 | **Testing**         | Go testing & mocks                       |
 | **CI/CD**           | GitHub Actions                           |
 
@@ -48,29 +57,25 @@ This system is built on a microservice architecture. Components interact asynchr
 
 ---
 
-## 🚀 Quick Start (Docker)
+## 🚀 Quick Start (Docker Compose)
 
-This is the recommended way to run the project. Docker Compose will automatically bring up all components, including the MQTT broker.
+This is the recommended way to run the project. Docker Compose will automatically build and run all services: the Go backend, the database, the MQTT broker, and the frontend.
 
-1.  **Clone the repository** and navigate into it:
+1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/qoparu/tdl.git
+    git clone [https://github.com/qoparu/tdl.git](https://github.com/qoparu/tdl.git)
     cd tdl
     ```
-1.1 **wait-for-it.sh**
-    ```bash
-    Make sure wait-for-it.sh is present in the project root (already included in this repo).
-    ```
-    
-This script ensures the backend waits until the database is ready before starting.
-2.  **Run all containers** with a single command:
+
+2.  **Run the entire stack:**
     ```bash
     docker-compose --profile client-server up --build
     ```
-    This will start the Backend, Frontend, and Mosquitto MQTT broker.
-    - Frontend: [http://localhost:3000](http://localhost:3000)
-    - Backend: [http://localhost:8080](http://localhost:8080)
 
+3.  **Access the application:**
+    * **Frontend:** [http://localhost:5173](http://localhost:5173)
+    * **Backend API:** [http://localhost:8080](http://localhost:8080)
+      
 ---
 
 ## 🛠️ Technologies and Concepts
@@ -84,9 +89,6 @@ This project demonstrates the following key concepts from the 'Distributed Progr
 * **Communication:**
     * **Message-Oriented Middleware:** Using MQTT (with the Eclipse Paho library in Go).
     * **REST API:** For client-server interaction.
-
-* **Synchronization:**
-    * **Lamport's Logical Clocks:** Partial ordering of events in a distributed system.
 
 * **Data Serialization:**
     * **JSON:** For API requests and events.
