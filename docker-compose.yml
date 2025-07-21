@@ -3,12 +3,12 @@ services:
     image: eclipse-mosquitto
     container_name: mqtt
     ports:
-      - "1883:1883"
-      - "8080:8080"  
+      - "1884:1883"
+      - "9001:9001" 
     volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
-    profiles:
-      - client-server
+    - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+    networks:
+      - default
 
   db:
     image: postgres:15
