@@ -100,4 +100,4 @@ To run backend tests:
 go test ./...
 ```
 
-<div align="center"> <h3>✨ Crafted with ❤️ by <a href="https://github.com/qoparu">Aru</a> ✨</h3> <p>For the <b>Automated Software Testing</b> exam</p> <img src="https://img.shields.io/badge/Java-Expert-important?logo=java" alt="Java Expert"> </div> 
+<div align="center"> <h3>✨ Crafted with ❤️ by <a href="https://github.com/qoparu">Aru</a> ✨</h3> <p>For the <b>DISTRIBUTED PROGRAMMING FOR WEB, IOT AND MOBILE SYSTEMS</b> exam</p> </div> ```
