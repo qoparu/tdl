@@ -24,6 +24,7 @@ This system is built on a microservice architecture. Components interact asynchr
 <p align="center">
   <img src="docker.png" alt="img" />
 </p>
+
 ---
 
 ## 🎯 Basic Requirements  
