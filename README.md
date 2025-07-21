@@ -20,6 +20,10 @@ Built for the *Distributed Programming for Web, IoT and Mobile Systems* exam.
 
 This system is built on a microservice architecture. Components interact asynchronously via an MQTT message broker, ensuring loose coupling and high fault tolerance.
 
+
+<p align="center">
+  <img src="docker.png" alt="img" />
+</p>
 ---
 
 ## 🎯 Basic Requirements  
