@@ -145,8 +145,12 @@
     </div>
     <ul id="list"></ul>
   </div>
+
 <script>
-const client = mqtt.connect('ws://localhost:9001');// Change for prod
+// === ИЗМЕНЕНИЕ 1: Добавляем константу с адресом API ===
+const API_BASE_URL = 'http://localhost:8080';
+
+const client = mqtt.connect('ws://localhost:9001');
 client.on('connect', () => setStatus('🟢 MQTT connected'));
 client.on('error', err => setStatus('🔴 MQTT error: ' + err));
 client.on('message', (topic, msg) => {
@@ -167,13 +171,23 @@ function setStatus(txt) {
 }
 
 function fetchTasks() {
-  fetch('/tasks')
-    .then(r => r.json())
+  // === ИЗМЕНЕНИЕ 2: Используем полный адрес ===
+  fetch(`${API_BASE_URL}/tasks`)
+    .then(r => {
+      if (!r.ok) throw new Error('Server responded with an error');
+      return r.json();
+    })
     .then(ts => {
       const ul = document.getElementById('list');
       ul.innerHTML = '';
-      ts.forEach(t => appendTask(t));
-      setStatus('Tasks loaded');
+      // Проверяем, что ts - это массив
+      if (Array.isArray(ts)) {
+        ts.forEach(t => appendTask(t));
+        setStatus('Tasks loaded');
+      } else {
+        // Если задач нет, сервер может вернуть null или пустой ответ
+        setStatus('No tasks yet. Add one!');
+      }
     })
     .catch(() => setStatus('Failed to load tasks'));
 }
@@ -197,7 +211,8 @@ function addTask() {
     inp.focus();
     return;
   }
-  fetch('/tasks', {
+  // === ИЗМЕНЕНИЕ 3: Используем полный адрес ===
+  fetch(`${API_BASE_URL}/tasks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text })
@@ -212,7 +227,8 @@ function addTask() {
 }
 
 function toggleTask(id, done) {
-  fetch(`/tasks/${id}`, {
+  // === ИЗМЕНЕНИЕ 4: Используем полный адрес ===
+  fetch(`${API_BASE_URL}/tasks/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ done: !done })
@@ -222,21 +238,22 @@ function toggleTask(id, done) {
 }
 
 function deleteTask(id) {
-  fetch(`/tasks/${id}`, {
+  // === ИЗМЕНЕНИЕ 5: Используем полный адрес ===
+  fetch(`${API_BASE_URL}/tasks/${id}`, {
     method: 'DELETE'
   })
     .then(fetchTasks)
     .catch(() => setStatus('Failed to delete task'));
 }
 
-// HTML escaping for task text
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, c =>
-    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
   );
 }
 
 fetchTasks();
 </script>
+
 </body>
 </html>
