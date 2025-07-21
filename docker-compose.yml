@@ -1,14 +1,10 @@
 services:
-  # --- PROFILE 1: CLIENT-SERVER SYSTEM ---
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
+  mqtt:
+    image: eclipse-mosquitto
+    container_name: mqtt
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "1883:1883"
     profiles:
-      # This service belongs to the 'client-server' profile
       - client-server
 
   server:
@@ -17,12 +13,12 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - rabbitmq
+      - mqtt
+    volumes:
+      - ./config.yaml:/app/config.yaml
     profiles:
-      # This service also belongs to the 'client-server' profile
       - client-server
 
-  # ADDED: Frontend service
   frontend:
     build: ./frontend
     container_name: frontend
@@ -31,15 +27,4 @@ services:
     depends_on:
       - server
     profiles:
-      # The frontend is also part of the 'client-server' profile
       - client-server
-
-  # --- PROFILE 2: P2P DEMONSTRATION ---
-
-  p2p-node:
-    build:
-      context: ./p2p-demo
-    container_name: p2p-node
-    profiles:
-      # This service belongs to the 'p2p' profile
-      - p2p
