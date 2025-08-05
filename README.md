@@ -108,4 +108,13 @@ To run backend tests:
 go test ./...
 ```
 
+
+<p align="right">
+  <img src="db.png" alt="img" />
+</p>
+
+<p align="left">
+  <img src="p1.png" alt="img" />
+</p>
+
 <div align="center"> <h3>✨ Crafted with ❤️ by <a href="https://github.com/qoparu">Aru</a> ✨</h3> <p>For the <b>DISTRIBUTED PROGRAMMING FOR WEB, IOT AND MOBILE SYSTEMS</b> exam</p> </div>
