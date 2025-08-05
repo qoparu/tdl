@@ -109,11 +109,11 @@ go test ./...
 ```
 
 
-<p align="right">
+<p align="center">
   <img src="db.jpg" alt="img" />
 </p>
 
-<p align="left">
+<p align="center">
   <img src="p1.jpg" alt="img" />
 </p>
 
